@@ -1,0 +1,170 @@
+body {
+    margin: 20px;
+    padding: 0;
+    font-size: 14px;
+    font-family: Arial, sans-serif;
+}
+h1 {
+    font-size: 18px;
+    color: #6f9ce2;
+}
+h2 {
+    font-size: 14px;
+    color: #6f9ce2;
+}
+h3 {
+    margin: 0;
+    padding: 0;
+}
+a {
+    color: darkblue;
+}
+ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+}
+.cl {
+    clear: both;
+    padding: 0;
+    margin: 0;
+}
+
+.blockRight, .blockLeft {
+    width: 400px;
+    float: left;
+}
+.blockRight {
+    height: 350px;
+    margin-left: 40px;
+}
+.blockRight_sub {
+    display: none;
+}
+
+/*
+Search
+*/
+.bl_search {
+    padding: 0;
+}
+.search_input {
+    border: 1px solid #e3e9ef;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -khtml-border-radius: 3px;
+    float: left;
+    font-size: 13px;
+    margin-right: 4px;
+    padding: 3px 2px 2px;
+    width: 245px;
+    color: #999;
+}
+.search_input:focus {
+    color: #000;
+}
+.search_go {
+    background: url("/css/i/search.png") no-repeat scroll 0 0 rgba(0, 0, 0, 0);
+    border: medium none;
+    cursor: pointer;
+    height: 24px;
+    width: 36px;
+}
+.search_path {
+    font-size: 12px;
+    font-style: italic;
+    margin-bottom: 8px;
+}
+.search_path span {
+    font-style: normal;
+}
+.small {
+    font-size: 10px;
+}
+
+/*
+Tree
+*/
+.filetree, #blockResult {
+    width: 400px;
+    border-top: solid 1px #BBB;
+    border-left: solid 1px #BBB;
+    border-bottom: solid 1px #FFF;
+    border-right: solid 1px #FFF;
+    background: #FFF;
+    overflow: scroll;
+    padding: 5px;
+}
+
+#blockResult {
+    height: 340px;
+}
+.filetree {
+    height: 490px;
+}
+/*
+Result of search
+*/
+.fileList li {
+    clear: both;
+    height: 20px;
+}
+.fileList li:hover {
+    background-color: #e3e9ef;
+}
+.fileList li div {
+    float: left;
+    font-size: 12px;
+}
+.fileList .title div {
+    font-weight: bold;
+    border-bottom: 1px solid #BBB;
+}
+.fileList li .nm {
+    width: 150px;
+}
+.fileList li .sz {
+    width: 70px;
+}
+.fileList li .pth {
+    width: 160px;
+}
+
+/*
+Popup with file info
+*/
+.popup_block{
+    width: 300px;
+    height: 120px;
+    border: 1px solid darkblue;
+    border-radius: 3px;
+    -moz-border-radius: 3px;
+    -webkit-border-radius: 3px;
+    -khtml-border-radius: 3px;
+    background: aliceblue;
+    display: none;
+    position: absolute;
+    top: 40%;
+    left: 40%;
+    margin: 0;
+    padding: 10px;
+    z-index: 20;
+}
+.popup_block i {
+    font-size: 12px;
+}
+
+/*
+Background under popup
+*/
+#back {
+    display: none;
+    height:100%;
+    width:100%;
+    z-index:10;
+    position: fixed;
+    top:0px;
+    left:0px;
+    background:#000;
+}
