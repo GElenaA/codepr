@@ -1,0 +1,136 @@
+<?php
+/**
+ * Class Template.class - класс, обрабатывающий шаблоны для отображения данных
+ * @author Елена Орешкина <elena.graneva@gmail.com>
+ */
+
+class Template {
+    /**
+     * @var text Код исходного шаблона
+     */
+    public $template;
+    /**
+     * @var array Мета-данные для подстановки в шаблон
+     */
+    public $replacement;
+    /**
+     * @var string Имя файла *.tpl с шаблоном в папке templates
+     */
+    public $filename;
+
+    /**
+     * Конструктор класса
+     * @param $repl - массив с данными для подставновки в шаблон
+     * @param $file - имя файла с шаблоном
+     */
+    function __construct($repl,$file){
+        $this->replacement = $repl;
+        $this->filename = !empty($file) ? __DIR__ . '/../templates/' . $file . '.tpl' : '';
+    }
+
+    /**
+     * Чтение содержимого шаблона из файла
+     */
+    private function readTemplate(){
+        if(empty($this->filename)){
+            echo 'Ошибка. Не указано имя файла с шаблоном<br>';
+            return;
+        }
+        if (!file_exists($this->filename)){
+            echo 'Ошибка. Файл с шаблоном ' . $this->filename . ' не найден.<br>';
+            return;
+        }
+        $fp = @fopen($this->filename, "r");
+        if (!$fp){
+            echo 'Ошибка чтения файла с шаблоном ' . $this->filename . '.<br>';
+            return;
+        }
+        $str = '';
+        while (!@feof($fp)) {
+            $str .= @fread($fp, 1024*4);
+        }
+        @fclose($fp);
+        return $str;
+    }
+
+    /**
+     * Подстановка мета-данных в шаблон
+     */
+    public function parse(){
+        $this->template = $this->readTemplate();
+        if(empty($this->template)){
+            echo 'Ошибка. Файл с шаблоном ' . $this->filename . ' пустой.<br>';
+            return;
+        }
+
+        if(is_array($this->replacement)){
+            foreach($this->replacement as $key=>$val){
+                if(!empty($key) && !empty($this->template) && !is_array($val))
+                    $this->template = preg_replace('/<%'.$key.'%>/is', $val, $this->template);
+            }
+            $this->template = $this->ParseFunction($this->template,$this->replacement);
+        }
+    }
+
+    /**
+     * Парсинг доп.конструкций шаблонов: условия, циклы, отрицания
+     * @param $result - Код с шаблоном
+     * @param $vars_arr - Данные для заменты мета-вставок
+     * @return mixed - Шаблон с подставленными данными
+     */
+    private function ParseFunction($result,$vars_arr) {
+        $result = preg_replace("/<%([\?~:])([a-zA-Z0-9_]*)(([<>!=]{1,2})([a-zA-Z0-9_]*)){0,1}%>(.*)<%\\1\/\\2%>/iseU","\$this->ProcessParse('\\0','\\1','\\2','\\4','\\5','\\6',\$vars_arr)",$result);
+        $result = preg_replace("/<%([a-zA-Z0-9_]*)%>/ise","\$vars_arr['\\1']",$result);
+        $result = preg_replace('/[\\\\"]/is','',$result);
+        return $result;
+    }
+
+    /**
+     * Обработка конструкций: условия, циклы, отрицания
+     * @param $whole - Весь код шаблона
+     * @param $tag - символ конструкции (? - условия, : - циклы, ~ - отрицания)
+     * @param $itemname - имя мета-вставки (ключ в массиве замен)
+     * @param $condition - условие
+     * @param $value - значение
+     * @param $content - Код шаблона для подстановки мета-данных
+     * @param $vars_arr - Данные для заменты мета-вставок
+     * @return mixed|string - Шаблон с подставленными данными
+     */
+    private function ProcessParse($whole,$tag,$itemname,$condition,$value,$content,$vars_arr) {
+        $result="";
+        if($tag=="?") {
+            if($condition) {
+                eval("\$res=(\$vars_arr[\$itemname]$condition'$value')?true:false;");
+                if($res)
+                    return $this->ParseFunction($content,$vars_arr);
+                else
+                    return "";
+            } else {
+                if(@$vars_arr[$itemname])
+                    return $this->ParseFunction($content,$vars_arr);
+                else
+                    return "";
+            }
+        }elseif($tag=="~"){
+            if(@$vars_arr[$itemname]=="")
+                return $this->ParseFunction($content,$vars_arr);
+            else
+                return "";
+        } else {
+            foreach($vars_arr[$itemname] as $ind=>$value) {
+                $result.=$this->ParseFunction($content,$value);
+            }
+            return $result;
+        }
+    }
+
+    /**
+     * Вывод на экран содержимого шаблона
+     */
+    public function display(){
+        $this->parse();
+        echo $this->template;
+    }
+
+}
+?>

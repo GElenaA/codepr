@@ -1,0 +1,138 @@
+<?php
+/**
+ * Class ViewLocalFiles - класс, отображающий файлы и директории на сервере, а также осуществляющий
+ * поиск по файлам
+ *
+ * @author Елена Орешкина <elena.graneva@gmail.com>
+ */
+
+class ViewLocalFiles {
+
+    public function __construct()
+    {
+    }
+
+    /**
+     * Вывод списка вложенных директорий и файлов для текущей (без рекурсии)
+     * @param $path - Путь текущей директории
+     * @return array - Массив с папками и файлами из текущей выбранной директории
+     */
+    public function getListChildren($path){
+        $arr = array();
+        try{
+            $iterator = new RecursiveDirectoryIterator($path,FilesystemIterator::CURRENT_AS_SELF | FilesystemIterator::SKIP_DOTS);
+            throw new UnexpectedValueException("Path ".$path." is not found.");
+        }catch (UnexpectedValueException $e){
+//                echo get_class($e) . ": " . $e->getMessage();
+        }
+
+        if(!empty($iterator)){
+            $a = $this->sortDirIterator($iterator);
+            foreach ($a as $entry) {
+                $v = $entry->getFilename();
+                $arr[] = Array("dir"=>($entry->isDir() ? 1 : 0),
+                    "rel"=>htmlentities($path . $v),
+                    "name"=>$v,
+                    "ext"=>$entry->getExtension()
+                );
+            }
+            echo json_encode($arr);
+        }
+        return $arr;
+    }
+
+    /**
+     * Поиск файлов по заданным условиям
+     * @param $val - Строка поиска. Может задаваться масками:
+     *  '*.php' - файлы с определенным расширением
+     *  'name.*' - файлы с названием 'name' и любым расширением
+     *  'name' - любые файлы, в которых есть подстрока 'name'
+     *
+     * @param $dir - Путь до папки, в которой осуществляется поиск
+     */
+    public function getSearchInfo($val,$dir){
+        $arr = Array();
+
+        if(empty($dir)) return;
+
+        $regex = '^(.*)[\\' . DIRSEP . ']' .
+            preg_replace('/[<>:"\/\\|\?\^\$]+/i','',
+                preg_replace('/[\?]+/i','(.{1})',
+                    preg_replace('/[\*]+/i','(.+)',
+                        preg_replace('/([.-]+)/i','[\\1]'
+                            ,trim($val)
+                        ) ) ) );
+        if(empty($regex)) return;
+        if(preg_match('/(\.[a-z0-9]+)$/i',$regex)) $regex.='$';
+
+        try{
+
+            $iterator = new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS);
+            $iter = new RecursiveIteratorIterator($iterator);
+//            $iter->setMaxDepth(2);
+
+            $reg = new RegexIterator($iter,'/'.$regex.'/i');
+
+            throw new UnexpectedValueException("Path for searching ".$dir." is not found.");
+        }catch (UnexpectedValueException $e){
+//                echo get_class($e) . ": " . $e->getMessage();
+        }
+
+        if(!empty($reg)){
+            foreach($reg as $v){
+                $arr[] = Array("path"=>preg_replace('/[\\\]+/i','/',$v->getPath()),
+                    "name"=>$v->getFileName(),
+                    "nameJs"=>preg_replace('/[\\\]+/i','/',$v),
+                    "size"=>$v->getSize()
+                );
+            }
+            echo json_encode($arr);
+        }
+        return $arr;
+    }
+
+    /**
+     * Получение и вывод информации о файле
+     * @param $file - Путь до файла
+     */
+    public function getFileInformation($file){
+        $json = '';
+        try{
+            $info = new SplFileInfo($file);
+            if(!$info->isFile())
+                throw new RuntimeException("Ошибка получения информации о файле ".$file);
+
+            $json = json_encode(Array("name"=>$info->getFilename(),
+                "path"=>$info->getPath(),
+                "size"=>$info->getSize(),
+                "ext"=>$info->getExtension(),
+                "date"=>date('d.m.Y H:i',$info->getMTime())
+            ));
+            echo $json;
+        } catch (RuntimeException $e) {
+            echo $e->getMessage();
+        }
+        return $json;
+    }
+
+    /**
+     * Сортировка списка директорий и файлов в порядке следования: сначала директории, затем файлы
+     * @param $iterator - Итератор с данными текущей директории
+     * @return array - Отсортированный массив с данными директории
+     */
+    private function sortDirIterator($iterator){
+        $arr = Array('Dir'=>Array(),'File'=>Array());
+        foreach ($iterator as $info) {
+            if ($info->isDot()) {
+                continue;
+            }
+            $arr[$info->isDir() ? 'Dir' : 'File'][$info->__toString()] = $info->getFileInfo();
+        }
+        ksort($arr['Dir']);
+        ksort($arr['File']);
+        $arr = array_merge($arr['Dir'],$arr['File']);
+        return $arr;
+    }
+
+}
+?>
